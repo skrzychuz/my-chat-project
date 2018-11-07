@@ -14,25 +14,23 @@ import static server.MainServer.serverServicesList;
 public class ServerService extends Thread {
     private static final Logger LOGGER = Logger.getLogger(ServerService.class.getName());
 
-    MyMessage myMessage = new MyMessage(12, "terefere");
+    //    MyMessage myMessage = new MyMessage(12, "terefere");
     private String login = "";
 
     private final Socket clientSocket;
-    private InputStream inputStream;
+
+    //    private InputStream inputStream;
     private OutputStream outputStream;
 
     BufferedReader reader;
     ObjectOutputStream objectOutputStream;
-    ObjectInputStream objectInputStream;
 
 
     ServerService(Socket clientSocket) throws IOException {
         this.clientSocket = clientSocket;
-        this.inputStream = clientSocket.getInputStream();
-        this.outputStream = clientSocket.getOutputStream();
-        this.reader = new BufferedReader(new InputStreamReader(inputStream));
-        this.objectOutputStream = new ObjectOutputStream(this.outputStream);
-        this.objectInputStream = new ObjectInputStream(this.inputStream);
+
+//        this.reader = new BufferedReader(new InputStreamReader(inputStream));
+//        this.objectOutputStream = new ObjectOutputStream(this.outputStream);
 
     }
 
@@ -47,31 +45,33 @@ public class ServerService extends Thread {
     }
 
     private void clientHandling() throws IOException, InterruptedException, ClassNotFoundException {
+        this.outputStream = clientSocket.getOutputStream();
+        InputStream inputStream = clientSocket.getInputStream();
 
-
+        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         String sender;
 
-        while (true) {
+        while (clientSocket.isConnected()) {
             MyMessage myMessage = (MyMessage) objectInputStream.readObject();
             sender = myMessage.getSender();
             loginCheck(sender);
             ServerService service = findReceiver(myMessage.getReceiver());
-            service.sendMessage(myMessage);
-
+            if (service != null)
+                service.sendMessage(myMessage);
 
 
         }
 
-
+        clientSocket.close();
 
     }
 
     private void sendMessage(MyMessage myMessage) throws IOException {
-        LOGGER.log(Level.INFO, "send message function");
-        System.out.println(myMessage.getMessage());
+        LOGGER.log(Level.INFO, "send message function " + this.login);
+
         for (ServerService service : serverServicesList) {
             if (service.getLogin().equals(myMessage.getReceiver())) {
-
+                LOGGER.log(Level.INFO, "message object check " + myMessage);
                 objectOutputStream.writeObject(myMessage);
 
                 LOGGER.log(Level.INFO, "send message function - done");
@@ -83,9 +83,9 @@ public class ServerService extends Thread {
 
     private ServerService findReceiver(String name) throws IOException {
         for (ServerService service : serverServicesList) {
-            if (name.equals(myMessage.getReceiver())) {
-                ServerService serverService = service;
-                return serverService;
+            if ((service.getLogin().equals(name))) {
+                return service;
+
             }
         }
         LOGGER.log(Level.WARNING, "Service Receiver not exist");
