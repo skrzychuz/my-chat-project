@@ -1,6 +1,5 @@
 package server;
 
-
 import message.MyMessage;
 
 import java.io.*;
@@ -8,118 +7,89 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static server.MainServer.serverServicesList;
-
+import static server.MainServer.getserverServicesList;
 
 public class ServerService extends Thread {
     private static final Logger LOGGER = Logger.getLogger(ServerService.class.getName());
-
-    //    MyMessage myMessage = new MyMessage(12, "terefere");
     private String login = "";
-
     private final Socket clientSocket;
-
-    //    private InputStream inputStream;
     private OutputStream outputStream;
-
-    BufferedReader reader;
-    ObjectOutputStream objectOutputStream;
+    private ObjectOutputStream objectOutputStream;
 
 
-    ServerService(Socket clientSocket) throws IOException {
+    ServerService(Socket clientSocket) {
         this.clientSocket = clientSocket;
 
-//        this.reader = new BufferedReader(new InputStreamReader(inputStream));
-//        this.objectOutputStream = new ObjectOutputStream(this.outputStream);
-
     }
-
 
     @Override
     public void run() {
         try {
             clientHandling();
-        } catch (IOException | InterruptedException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    private void clientHandling() throws IOException, InterruptedException, ClassNotFoundException {
+    private void clientHandling() throws IOException, ClassNotFoundException {
         this.outputStream = clientSocket.getOutputStream();
         InputStream inputStream = clientSocket.getInputStream();
-
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        String sender;
 
         while (clientSocket.isConnected()) {
             MyMessage myMessage = (MyMessage) objectInputStream.readObject();
-            sender = myMessage.getSender();
-            loginCheck(sender);
-            ServerService service = findReceiver(myMessage.getReceiver());
-            if (service != null)
-                service.sendMessage(myMessage);
-
-
+            loginCheck(myMessage.getSender());
+            receiverCheck(myMessage);
         }
-
         clientSocket.close();
-
     }
 
     private void sendMessage(MyMessage myMessage) throws IOException {
-        LOGGER.log(Level.INFO, "send message function " + this.login);
+        objectOutputStream = new ObjectOutputStream(outputStream);
+        LOGGER.log(Level.INFO, "send message from " + this.login + " to " + myMessage.getReceiver());
 
-        for (ServerService service : serverServicesList) {
+        for (ServerService service : getserverServicesList()) {
             if (service.getLogin().equals(myMessage.getReceiver())) {
-                LOGGER.log(Level.INFO, "message object check " + myMessage);
                 objectOutputStream.writeObject(myMessage);
-
-                LOGGER.log(Level.INFO, "send message function - done");
+                LOGGER.log(Level.INFO, "message sent to " + service.login);
             }
         }
-
-
     }
 
-    private ServerService findReceiver(String name) throws IOException {
-        for (ServerService service : serverServicesList) {
-            if ((service.getLogin().equals(name))) {
-                return service;
-
-            }
-        }
-        LOGGER.log(Level.WARNING, "Service Receiver not exist");
-        return null;
-    }
-
-
-    private void loginCheck(String sender) throws IOException {
+    private void loginCheck(String sender) {
         if (existFunction(sender)) {
             LOGGER.log(Level.INFO, "User exists");
 
         } else {
             setLogin(sender);
-            serverServicesList.add(this);
             LOGGER.log(Level.INFO, "User logged");
 
         }
     }
 
+    private void receiverCheck(MyMessage message) throws IOException {
+        if (existFunction(message.getReceiver())) {
+            LOGGER.log(Level.INFO, "User exists");
+            sendMessage(message);
+        } else {
+            LOGGER.log(Level.INFO, "Receiver not exist");
+        }
+    }
 
     private boolean existFunction(String name) {
-        for (ServerService service : serverServicesList) {
+
+        for (ServerService service : getserverServicesList()) {
             if (service.getLogin().equals(name))
                 return true;
         }
         return false;
     }
 
-
-    public String getLogin() {
+    private String getLogin() {
         return login;
     }
 
-    public void setLogin(String login) {
+    private void setLogin(String login) {
         this.login = login;
     }
 }

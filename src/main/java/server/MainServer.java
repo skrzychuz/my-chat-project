@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 public class MainServer {
     private static final Logger LOGGER = Logger.getLogger(MainServer.class.getName());
 
-    static ArrayList<ServerService> serverServicesList = new ArrayList<>();
+    private static ArrayList<ServerService> serverServicesList = new ArrayList<>();
 
     public static List<ServerService> getserverServicesList() {
         return serverServicesList;
