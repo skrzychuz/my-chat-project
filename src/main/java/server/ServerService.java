@@ -4,21 +4,23 @@ import message.MyMessage;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static server.MainServer.getserverServicesList;
 
 public class ServerService extends Thread {
     private static final Logger LOGGER = Logger.getLogger(ServerService.class.getName());
+    private final Supplier<List<ServerService>> supllier;
     private String login = "";
     private final Socket clientSocket;
     private OutputStream outputStream;
-    private ObjectOutputStream objectOutputStream;
 
 
-    ServerService(Socket clientSocket) {
+    ServerService(Socket clientSocket, Supplier<List<ServerService>> supplier) {
         this.clientSocket = clientSocket;
+        this.supllier = supplier;
 
     }
 
@@ -45,10 +47,10 @@ public class ServerService extends Thread {
     }
 
     private void sendMessage(MyMessage myMessage) throws IOException {
-        objectOutputStream = new ObjectOutputStream(outputStream);
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
         LOGGER.log(Level.INFO, "send message from " + this.login + " to " + myMessage.getReceiver());
 
-        for (ServerService service : getserverServicesList()) {
+        for (ServerService service : supllier.get()) {
             if (service.getLogin().equals(myMessage.getReceiver())) {
                 objectOutputStream.writeObject(myMessage);
                 LOGGER.log(Level.INFO, "message sent to " + service.login);
@@ -78,7 +80,7 @@ public class ServerService extends Thread {
 
     private boolean existFunction(String name) {
 
-        for (ServerService service : getserverServicesList()) {
+        for (ServerService service : supllier.get()) {
             if (service.getLogin().equals(name))
                 return true;
         }
