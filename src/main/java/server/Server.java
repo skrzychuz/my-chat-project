@@ -13,9 +13,9 @@ class Server {
 
 
     private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
-    private ArrayList<ServerService> serverServicesList = new ArrayList<>();
+    private ArrayList<ClientHandler> serverServicesList = new ArrayList<>();
     private final int serverPort;
-    Supplier<List<ServerService>> supplier;
+    Supplier<List<ClientHandler>> supplier;
 
 
     public Server(int port) {
@@ -35,7 +35,7 @@ class Server {
                 LOGGER.log(Level.INFO, "Waiting for client...");
                 Socket clientSocket = serverSocket.accept();
                 LOGGER.log(Level.INFO, "Client accepted");
-                ServerService serverService = new ServerService(clientSocket, supplier);
+                ClientHandler serverService = new ClientHandler(clientSocket, supplier);
                 serverServicesList.add(serverService);
 
 

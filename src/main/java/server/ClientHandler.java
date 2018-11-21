@@ -10,15 +10,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class ServerService extends Thread {
-    private static final Logger LOGGER = Logger.getLogger(ServerService.class.getName());
-    private final Supplier<List<ServerService>> supllier;
+public class ClientHandler extends Thread {
+    private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
+    private final Supplier<List<ClientHandler>> supllier;
     private String login = "";
     private final Socket clientSocket;
     private OutputStream outputStream;
 
 
-    ServerService(Socket clientSocket, Supplier<List<ServerService>> supplier) {
+    ClientHandler(Socket clientSocket, Supplier<List<ClientHandler>> supplier) {
         this.clientSocket = clientSocket;
         this.supllier = supplier;
 
@@ -50,7 +50,7 @@ public class ServerService extends Thread {
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
         LOGGER.log(Level.INFO, "send message from " + this.login + " to " + myMessage.getReceiver());
 
-        for (ServerService service : supllier.get()) {
+        for (ClientHandler service : supllier.get()) {
             if (service.getLogin().equals(myMessage.getReceiver())) {
                 objectOutputStream.writeObject(myMessage);
                 LOGGER.log(Level.INFO, "message sent to " + service.login);
@@ -80,7 +80,7 @@ public class ServerService extends Thread {
 
     private boolean existFunction(String name) {
 
-        for (ServerService service : supllier.get()) {
+        for (ClientHandler service : supllier.get()) {
             if (service.getLogin().equals(name))
                 return true;
         }
