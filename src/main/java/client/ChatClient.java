@@ -18,8 +18,14 @@ public class ChatClient {
             Socket socket = new Socket("127.0.0.1", 8885);
             System.out.println("Connected: " + socket);
             objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            InputStream inputStream = socket.getInputStream();
+//            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+
             objectOutputStream.writeObject(message);
             while (true) {
+
+//                MyMessage myMessage = (MyMessage) objectInputStream.readObject();
+//                System.out.println(myMessage.getMessage());
 
             }
 
@@ -28,6 +34,14 @@ public class ChatClient {
         } catch (IOException ioe) {
             System.err.println("Unexpected exception: " + ioe.getMessage());
         }
+
+    }
+
+
+    public void send(String sender, Socket socket) throws IOException {
+
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+//        objectOutputStream.writeObject(message);
 
     }
 
@@ -40,7 +54,7 @@ public class ChatClient {
         myMessageList.add(msg2);
         myMessageList.add(msg3);
 
-        new ChatClient(myMessageList.get(1));
+        ChatClient client = new ChatClient(myMessageList.get(0));
 
     }
 

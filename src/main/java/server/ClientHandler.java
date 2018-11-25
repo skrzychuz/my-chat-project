@@ -4,23 +4,26 @@ import message.MyMessage;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
 public class ClientHandler extends Thread {
     private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
-    private final Supplier<List<ClientHandler>> supllier;
+    private final Consumer<MyMessage> consumer;
+    private final Predicate<String> predicate;
     private String login = "";
     private final Socket clientSocket;
     private OutputStream outputStream;
+    ObjectOutputStream objectOutputStream;
 
 
-    ClientHandler(Socket clientSocket, Supplier<List<ClientHandler>> supplier) {
+    ClientHandler(Socket clientSocket, Consumer<MyMessage> consumer, Predicate<String> predicate) throws IOException {
         this.clientSocket = clientSocket;
-        this.supllier = supplier;
+        this.consumer = consumer;
+        this.predicate = predicate;
 
     }
 
@@ -47,15 +50,10 @@ public class ClientHandler extends Thread {
     }
 
     private void sendMessage(MyMessage myMessage) throws IOException {
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-        LOGGER.log(Level.INFO, "send message from " + this.login + " to " + myMessage.getReceiver());
+        this.objectOutputStream = new ObjectOutputStream(outputStream);
+        consumer.accept(myMessage);
 
-        for (ClientHandler service : supllier.get()) {
-            if (service.getLogin().equals(myMessage.getReceiver())) {
-                objectOutputStream.writeObject(myMessage);
-                LOGGER.log(Level.INFO, "message sent to " + service.login);
-            }
-        }
+
     }
 
     private void loginCheck(String sender) {
@@ -71,7 +69,7 @@ public class ClientHandler extends Thread {
 
     private void receiverCheck(MyMessage message) throws IOException {
         if (existFunction(message.getReceiver())) {
-            LOGGER.log(Level.INFO, "User exists");
+            LOGGER.log(Level.INFO, "Receiver exists");
             sendMessage(message);
         } else {
             LOGGER.log(Level.INFO, "Receiver not exist");
@@ -79,15 +77,10 @@ public class ClientHandler extends Thread {
     }
 
     private boolean existFunction(String name) {
-
-        for (ClientHandler service : supllier.get()) {
-            if (service.getLogin().equals(name))
-                return true;
-        }
-        return false;
+        return predicate.test(name);
     }
 
-    private String getLogin() {
+    public String getLogin() {
         return login;
     }
 
